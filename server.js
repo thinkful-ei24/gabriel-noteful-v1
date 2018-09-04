@@ -1,8 +1,8 @@
 'use strict';
 // Load simDB and Express
 const data = require('./db/notes');
-const simDB = require('./db/simDM');
-const notes = simDB.initalize(data);
+const simDB = require('./db/simDB');
+const notes = simDB.initialize(data);
 const express = require('express');
 const app = express();
 const { PORT } = require('./config');
@@ -12,20 +12,22 @@ const { logErrors } = require('./middleware/logger');
 app.use(express.static('public'));
 
 // Get all notes
-app.get('/api/notes', (req, res) => {
+app.get('/api/notes', (req, res, next) => {
   // Get the search term
   const { searchTerm } = req.query;
   // Send the result of a ternary
-  res.json(
-    checkIfRequestHasSearch(searchTerm)
-      ? buildFilteredArrayOfItems(searchTerm)
-      : data
-  );
+  notes.filter(searchTerm, (err, list) => {
+    if (err) return next(err);
+    res.json(list);
+  });
 });
 
 // Get a note by ID
-app.get('/api/notes/:id', (req, res) => {
-  res.json(findItemByID(getItemID(req)));
+app.get('/api/notes/:id', (req, res, next) => {
+  notes.find(getItemID(req), (err, item) => {
+    if (err) return next(err);
+    res.json(item);
+  });
 });
 
 // Error logging
@@ -79,6 +81,7 @@ function checkIfItemHasSearchTerm(searchTerm, item) {
 
 // Function for getting the id from a request
 function getItemID(request) {
+  console.log(request.params.id);
   return request.params.id;
 }
 
