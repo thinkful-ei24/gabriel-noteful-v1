@@ -1,10 +1,8 @@
 /* global $ store api */
 'use strict';
 
-const noteful = (function () {
-
+const noteful = (function() {
   function render() {
-
     const notesList = generateNotesList(store.notes, store.currentNote);
     $('.js-notes-list').html(notesList);
 
@@ -17,11 +15,15 @@ const noteful = (function () {
    * GENERATE HTML FUNCTIONS
    */
   function generateNotesList(list, currentNote) {
-    const listItems = list.map(item => `
-    <li data-id="${item.id}" class="js-note-element ${currentNote.id === item.id ? 'active' : ''}">
+    const listItems = list.map(
+      item => `
+    <li data-id="${item.id}" class="js-note-element ${
+    currentNote.id === item.id ? 'active' : ''
+  }">
       <a href="#" class="name js-note-show-link">${item.title}</a>
       <button class="removeBtn js-note-delete-button">X</button>
-    </li>`);
+    </li>`
+    );
     return listItems.join('');
   }
 
@@ -29,7 +31,9 @@ const noteful = (function () {
    * HELPERS
    */
   function getNoteIdFromElement(item) {
-    const id = $(item).closest('.js-note-element').data('id');
+    const id = $(item)
+      .closest('.js-note-element')
+      .data('id');
     return id;
   }
 
@@ -46,7 +50,6 @@ const noteful = (function () {
         store.currentNote = detailsResponse;
         render();
       });
-
     });
   }
 
@@ -61,16 +64,26 @@ const noteful = (function () {
         store.notes = searchResponse;
         render();
       });
-
     });
   }
 
   function handleNoteFormSubmit() {
-    $('.js-note-edit-form').on('submit', function (event) {
+    $('.js-note-edit-form').on('submit', function(event) {
       event.preventDefault();
 
-      console.log('Submit Note, coming soon...');
+      const editForm = $(event.currentTarget);
 
+      const noteObj = {
+        title: editForm.find('.js-note-title-entry').val(),
+        content: editForm.find('.js-note-content-entry').val()
+      };
+      noteObj.id = store.currentNote.id;
+
+      api.update(noteObj.id, noteObj, updateResponse => {
+        store.currentNote = updateResponse;
+
+        render();
+      });
     });
   }
 
@@ -79,7 +92,6 @@ const noteful = (function () {
       event.preventDefault();
 
       console.log('Start New Note, coming soon...');
-
     });
   }
 
@@ -88,14 +100,12 @@ const noteful = (function () {
       event.preventDefault();
 
       console.log('Delete Note, coming soon...');
-      
     });
   }
 
   function bindEventListeners() {
     handleNoteItemClick();
     handleNoteSearchSubmit();
-
     handleNoteFormSubmit();
     handleNoteStartNewSubmit();
     handleNoteDeleteClick();
@@ -104,7 +114,6 @@ const noteful = (function () {
   // This object contains the only exposed methods from this module:
   return {
     render: render,
-    bindEventListeners: bindEventListeners,
+    bindEventListeners: bindEventListeners
   };
-
-}());
+})();
