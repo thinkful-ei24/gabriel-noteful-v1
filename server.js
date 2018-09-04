@@ -1,18 +1,10 @@
 'use strict';
-
-// Load array of notes
+// Load notes DB and Express
 const data = require('./db/notes');
-
-console.log('Hello Noteful!');
-
-// INSERT EXPRESS APP CODE HERE...
 const express = require('express');
 const app = express();
-
-// Static server
+// Static server and listen
 app.use(express.static('public'));
-
-// Listen
 app
   .listen(8080, function() {
     console.log(`Server listening on ${this.address().port}`);
