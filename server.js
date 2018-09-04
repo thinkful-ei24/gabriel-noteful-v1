@@ -1,6 +1,8 @@
 'use strict';
-// Load notes DB and Express
+// Load simDB and Express
 const data = require('./db/notes');
+const simDB = require('./db/simDM');
+const notes = simDB.initalize(data);
 const express = require('express');
 const app = express();
 const { PORT } = require('./config');
