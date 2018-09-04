@@ -3,15 +3,11 @@
 const data = require('./db/notes');
 const express = require('express');
 const app = express();
-// Static server and listen
+const { PORT } = require('./config');
+const { logErrors } = require('./middleware/logger');
+
+// Static server
 app.use(express.static('public'));
-app
-  .listen(8080, function() {
-    console.log(`Server listening on ${this.address().port}`);
-  })
-  .on('error', err => {
-    console.error(err);
-  });
 
 // Get all notes
 app.get('/api/notes', (req, res) => {
@@ -30,6 +26,36 @@ app.get('/api/notes/:id', (req, res) => {
   res.json(findItemByID(getItemID(req)));
 });
 
+// Error logging
+app.use(logErrors);
+
+// 404 not found handler
+app.use(function(req, res, next) {
+  const err = new Error('Not found');
+  err.status = 404;
+  res.status(404).json({ message: 'Not found' });
+  next(err);
+});
+
+// Catch all error handler
+app.use(function(err, req, res, next) {
+  res.status(err.status || 500);
+  res.json({
+    message: err.message,
+    error: err
+  });
+});
+
+// Listen
+app
+  .listen(PORT, function() {
+    console.log(`Server listening on ${this.address().port}`);
+  })
+  .on('error', err => {
+    console.error(err);
+  });
+
+/***** Functions *****/
 // Function for checking if we have the search term
 function checkIfRequestHasSearch(searchTerm) {
   if (searchTerm) return true;
