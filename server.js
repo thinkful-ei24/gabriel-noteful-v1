@@ -6,6 +6,11 @@ const { PORT } = require('./config');
 const morgan = require('morgan');
 // Routers
 const notesRouter = require('./router/notes.router');
+// Utilities
+const { buildNewError } = require('./lib/utilities');
+
+/***** Error logging *****/
+app.use(morgan('dev'));
 
 // Static server
 app.use(express.static('public'));
@@ -13,15 +18,12 @@ app.use(express.static('public'));
 // Add body parser
 app.use(express.json());
 
-/***** Error logging *****/
-app.use(morgan('dev'));
-
 // Mount the router
 app.use('/api', notesRouter);
 
 // 404 not found handler
 app.use(function(req, res, next) {
-  const err = new Error('Not Found');
+  const err = buildNewError('Not found');
   handle404Error(res, err, next);
 });
 
@@ -39,9 +41,7 @@ app
     console.error(err);
   });
 
-/***** Functions *****/
-
-/*** Error handler functions ***/
+/***** Error handler functions *****/
 // Handle 404 errors
 function handle404Error(res, err, next) {
   err.status = 404;

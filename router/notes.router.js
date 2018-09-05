@@ -5,24 +5,31 @@ const router = express.Router();
 const data = require('../db/notes');
 const simDB = require('../db/simDB');
 const notes = simDB.initialize(data);
+// Utilities
+const { truthy, buildNewError } = require('../lib/utilities');
 
 /***** HTTP request handlers *****/
-// Get all notes
+// Create new note
+router.post('/notes', (req, res, next) => {
+  createNote(req, res, next);
+});
+
+// GET all notes
 router.get('/notes', (req, res, next) => {
   getAllNotes(req, res, next);
 });
 
-// Get a note by ID
+// GET note ID
 router.get('/notes/:id', (req, res, next) => {
   findNoteByID(req, res, next);
 });
 
-// Update a note by ID
+// Update note by ID
 router.put('/notes/:id', (req, res, next) => {
   updateNoteByID(req, res, next);
 });
 
-/*** Routing functions ***/
+/***** Routing functions *****/
 // Function for getting all notes
 function getAllNotes(req, res, next) {
   // Get the search term
@@ -37,7 +44,7 @@ function getAllNotes(req, res, next) {
 function updateNoteByID(req, res, next) {
   // Validate input
   const { id, updateObject, updateFields } = createValidationObject(req);
-  validateInput(updateObject, updateFields, req);
+  validateUpdateInput(updateObject, updateFields, req);
 
   notes.update(id, updateObject, (err, item) => {
     generateResponse(err, item, next, res);
@@ -51,9 +58,12 @@ function findNoteByID(req, res, next) {
   });
 }
 
-// Function for returning the search term from a query object
-function destructureSearchTerm(req) {
-  return req.query.searchTerm;
+// Function for creating a new note
+function createNote(req, res, next) {
+  // Create and validate new item
+  const newItem = buildNewItemObject(req.body);
+  validateNewItem(newItem, next);
+  addNoteToDB(req, res, next, newItem);
 }
 
 /*** Utility functions ***/
@@ -62,8 +72,18 @@ function getItemID(request) {
   return request.params.id;
 }
 
+// Function for creating ID object
+function createIDObject(req) {
+  return getItemID(req);
+}
+
+// Function for returning the search term from a query object
+function destructureSearchTerm(req) {
+  return req.query.searchTerm;
+}
+
 // Function for validating input
-function validateInput(updateObject, updateFields, req) {
+function validateUpdateInput(updateObject, updateFields, req) {
   // Look through all fields and check if the field is in the request body
   updateFields.forEach(field => {
     if (field in req.body) updateObject[field] = req.body[field];
@@ -87,9 +107,34 @@ function createValidationObject(req) {
   };
 }
 
-// Function for creating ID object
-function createIDObject(req) {
-  return getItemID(req);
+// Function for body request and building new item obj
+function buildNewItemObject(req) {
+  return { title: req.title, content: req.content };
+}
+
+// Function for new item validation
+function validateNewItem(object, next) {
+  if (!truthy(object.title)) {
+    const err = buildNewError('Missing title in request body');
+    err.status = 400;
+    return next(err);
+  }
+}
+
+// Function for creating new note
+function addNoteToDB(req, res, next, note) {
+  notes.create(note, (err, item) => {
+    if (err) return next(err);
+
+    if (item) {
+      res
+        .location(`http://${req.headers.host}/notes/${item.id}`)
+        .status(201)
+        .json(item);
+    } else {
+      next();
+    }
+  });
 }
 
 // Export module
