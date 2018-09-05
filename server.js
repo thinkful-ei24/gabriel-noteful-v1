@@ -6,13 +6,16 @@ const notes = simDB.initialize(data);
 const express = require('express');
 const app = express();
 const { PORT } = require('./config');
-const { logErrors } = require('./middleware/logger');
+const morgan = require('morgan');
 
 // Static server
 app.use(express.static('public'));
 
 // Add body parser
 app.use(express.json());
+
+/***** Error logging *****/
+app.use(morgan('dev'));
 
 /***** HTTP request handlers *****/
 // Get all notes
@@ -34,9 +37,6 @@ app.get('/api/notes/:id', (req, res, next) => {
 app.put('/api/notes/:id', (req, res, next) => {
   updateNoteByID(req, res, next);
 });
-
-/***** Error logging *****/
-app.use(logErrors);
 
 // 404 not found handler
 app.use(function(req, res, next) {
@@ -90,11 +90,14 @@ function findNoteByID(req, res, next) {
 }
 
 /*** Error handler functions ***/
+// Handle 404 errors
 function handle404Error(res, err, next) {
   err.status = 404;
   res.status(404).json({ message: 'Not found' });
   next(err);
 }
+
+// Handle catch all errors
 function handleCatchAllErrors(res, err) {
   res.status(err.status || 500);
   res.json({
