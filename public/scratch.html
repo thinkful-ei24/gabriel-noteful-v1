@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+
+<body>
+
+  <script type="text/javascript" src="//code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    crossorigin="anonymous"></script>
+
+  <script type="text/javascript" src="scripts/api.js"></script>
+  <script type="text/javascript" src="scripts/store.js"></script>
+  <script type="text/javascript" src="scripts/noteful.js"></script>
+  <script type="text/javascript" src="scripts/index.js"></script>
+  <script>
+    // SEARCH
+    api.search({})
+      .then(response => {
+        console.log('search', response)
+      });
+
+    // test get all with search term
+    api.search({ searchTerm: 'cats' })
+      .then(response => {
+        console.log('obj srch', response)
+      });
+
+    // DETAIL
+    api.details(1002)
+      .then(response => {
+        console.log('detail', response)
+      });
+
+
+
+    // UPDATE
+    api.update(1002, { title: 'titles suck', content: 'titles suck less than content' })
+      .then(response => {
+        console.log('update', response)
+      });
+
+    // CREATE
+    api.create({ title: 'AAAAAA', content: 'BBBBBBB' }).then(response => {
+      console.log('create', response)
+    });
+
+    // REMOVE
+    api.remove(1005).then(response => {
+      console.log('delete', response);
+    });
+  </script>
+</body>
+
+</html>
