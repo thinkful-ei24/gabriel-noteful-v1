@@ -42,7 +42,19 @@ function createNoteHandler(req, res, next) {
   // Create and validate new item
   const newItem = buildNewItemObject(req.body);
   validateNewItem(newItem, next);
-  addNoteToDB(req, res, next, newItem);
+  notes
+    .create(newItem)
+    .then(item => {
+      if (item) {
+        res
+          .location(`http://${req.headers.host}/notes/${item.id}`)
+          .status(201)
+          .json(item);
+      } else {
+        next();
+      }
+    })
+    .catch(err => next(err));
 }
 
 // READ
@@ -50,9 +62,12 @@ function getAllNoteHandler(req, res, next) {
   // Get the search term
   const searchTerm = destructureSearchTerm(req);
   // Send the result of a ternary
-  notes.filter(searchTerm, (err, list) => {
-    generateResponse(err, list, next, res);
-  });
+  notes
+    .filter(searchTerm)
+    .then(list => {
+      buildResponse(list, res, next);
+    })
+    .catch(err => next(err));
 }
 
 // UPDATE
@@ -61,30 +76,32 @@ function handleUpdateNoteByID(req, res, next) {
   const { id, updateObject, updateFields } = createValidationObject(req);
   validateUpdateInput(updateObject, updateFields, req);
 
-  notes.update(id, updateObject, (err, item) => {
-    generateResponse(err, item, next, res);
-  });
+  notes
+    .update(id, updateObject)
+    .then(item => {
+      buildResponse(item, res, next);
+    })
+    .catch(err => next(err));
 }
 
 // DELETE
 function deleteNoteByID(id, req, res, next) {
-  notes.delete(id, (err, item) => {
-    if (err) return next(err);
-
-    if (item) {
-      res.status(204).send();
-    } else {
-      err.status = 500;
-      next();
-    }
-  });
+  notes
+    .delete(id)
+    .then(item => {
+      buildResponse(item, res, next);
+    })
+    .catch(err => next(err));
 }
 
 // Function for finding note by ID
 function getNoteByID(req, res, next) {
-  notes.find(getItemID(req), (err, item) => {
-    generateResponse(err, item, next, res);
-  });
+  notes
+    .find(getItemID(req))
+    .then(item => {
+      buildResponse(item, res, next);
+    })
+    .catch(err => next(err));
 }
 
 /***** Utility functions *****/
@@ -99,10 +116,7 @@ function createIDObject(req) {
 }
 
 // Function for updating item
-function generateResponse(err, item, next, res) {
-  // If there's an error call the next error middleware
-  if (err) return next(err);
-  // If item exists respond with it, otherwise go to the next
+function buildResponse(item, res, next) {
   item ? res.json(item) : next();
 }
 
@@ -122,24 +136,6 @@ function validateNewItem(object, next) {
     err.status = 400;
     return next(err);
   }
-}
-
-// Function for creating new note
-function addNoteToDB(req, res, next, note) {
-  // Call notes.create
-  notes.create(note, (err, item) => {
-    if (err) return next(err);
-
-    // Respond with location and status 201
-    if (item) {
-      res
-        .location(`http://${req.headers.host}/notes/${item.id}`)
-        .status(201)
-        .json(item);
-    } else {
-      next();
-    }
-  });
 }
 
 /* READ utilities */
